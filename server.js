@@ -1,36 +1,28 @@
 const express = require('express');
-const { Connection, Transaction, Keypair } = require('@solana/web3.js');
-const bs58 = require('bs58');
-
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 
-// Configuration
-const connection = new Connection('https://api.mainnet-beta.solana.com');
+console.log('🔥 Service Test démarré !');
 
-console.log('🔥 Service Solana démarré !');
-
-// Endpoint principal
+// Endpoint de test
 app.post('/execute-swap', async (req, res) => {
   try {
-    console.log('🚀 Nouvelle demande de swap !');
+    console.log('🚀 Test de swap reçu !');
     
     const { transaction, privateKey } = req.body;
     
-    // Décoder et signer
-    const tx = Transaction.from(Buffer.from(transaction, 'base64'));
-    const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
-    tx.sign(keypair);
+    console.log('📋 Transaction reçue:', transaction ? 'OUI' : 'NON');
+    console.log('🔑 Private key reçue:', privateKey ? 'OUI' : 'NON');
     
-    // Envoyer
-    const signature = await connection.sendRawTransaction(tx.serialize());
-    
-    console.log('✅ Succès ! Signature:', signature);
+    // Simulation d'un succès
+    const fakeSignature = "TEST_" + Date.now();
     
     res.json({
       success: true,
-      signature: signature,
-      explorerUrl: `https://solscan.io/tx/${signature}`
+      signature: fakeSignature,
+      explorerUrl: `https://solscan.io/tx/${fakeSignature}`,
+      message: "Service de test - pas de vraie transaction",
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
@@ -42,14 +34,16 @@ app.post('/execute-swap', async (req, res) => {
 // Page de test
 app.get('/', (req, res) => {
   res.send(`
-    <h1>🔥 Solana Auto Signer</h1>
+    <h1>🔥 Solana Auto Signer - TEST</h1>
     <p>✅ Service fonctionnel !</p>
     <p>📡 Endpoint: POST /execute-swap</p>
+    <p>🔗 URL: ${req.get('host')}</p>
     <p>🕐 ${new Date()}</p>
+    <p>⚠️ Mode TEST - Pas de vraies transactions</p>
   `);
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Service démarré sur le port ${PORT}`);
+  console.log(`🚀 Service TEST démarré sur le port ${PORT}`);
 });
