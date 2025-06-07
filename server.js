@@ -1,51 +1,48 @@
 // ========================================
-// SOLUTION 1: HELIUS AVEC VRAIE SIGNATURE
+// SOLUTION 2: RPC DIRECT AVEC RETRY
 // ========================================
-console.log('🎯 Tentative Helius avec signature...');
+console.log('🎯 Tentative RPC Direct avec retry...');
 
-try {
-  // D'abord signer la transaction avec la clé privée
-  const signedTransaction = await signTransaction(transaction, privateKey);
-  
-  const heliusResponse = await axios.post('https://mainnet.helius-rpc.com/?api-key=1e408503-7cb8-4a1e-86db-5927280f3dfc', {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "sendTransaction",
-    params: [
-      signedTransaction, // Transaction signée
-      {
-        encoding: "base64",
-        skipPreflight: false,
-        preflightCommitment: "processed",
-        commitment: "confirmed"
-      }
-    ]
-  });
-  
-  if (heliusResponse.data.result && heliusResponse.data.result !== "1111111111111111111111111111111111111111111111111111111111111111") {
-    const signature = heliusResponse.data.result;
-    console.log('✅ Helius VRAIE SIGNATURE:', signature);
+const rpcEndpoints = [
+  'https://api.mainnet-beta.solana.com',
+  'https://solana-api.projectserum.com',
+  'https://rpc.ankr.com/solana'
+];
+
+for (const rpcUrl of rpcEndpoints) {
+  try {
+    console.log('🔄 Test RPC:', rpcUrl);
     
-    return res.json({
-      success: true,
-      signature: signature,
-      explorerUrl: `https://solscan.io/tx/${signature}`,
-      method: "HELIUS_REAL_TRANSACTION",
-      message: "🔥 VRAIE TRANSACTION BLOCKCHAIN VIA HELIUS !"
+    const rpcResponse = await axios.post(rpcUrl, {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "sendTransaction", 
+      params: [
+        transaction,
+        {
+          encoding: "base64",
+          skipPreflight: false,
+          preflightCommitment: "processed"
+        }
+      ]
+    }, {
+      timeout: 10000
     });
-  } else {
-    console.log('⚠️ Helius signature de test détectée');
+    
+    if (rpcResponse.data.result) {
+      const signature = rpcResponse.data.result;
+      console.log('✅ RPC SUCCESS:', signature);
+      
+      return res.json({
+        success: true,
+        signature: signature,
+        explorerUrl: `https://solscan.io/tx/${signature}`,
+        method: "SOLANA_RPC_DIRECT",
+        rpcUsed: rpcUrl,
+        message: "🔥 VRAIE TRANSACTION VIA RPC !"
+      });
+    }
+  } catch (rpcError) {
+    console.log('⚠️ RPC failed:', rpcUrl, rpcError.message);
   }
-} catch (heliusError) {
-  console.log('⚠️ Helius failed:', heliusError.message);
-}
-
-// Fonction de signature simple
-async function signTransaction(transaction, privateKey) {
-  // Version simple avec crypto natif
-  const crypto = require('crypto');
-  
-  // Pour l'instant, retourner la transaction telle quelle
-  // (On ajoutera la vraie signature après)
-  return transaction;
 }
