@@ -4,7 +4,7 @@ const axios = require('axios');
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 
-console.log('🔥 Solana Proxy Service - RESTAURÉ !');
+console.log('🔥 Solana Proxy Service - AJOUT #1 !');
 
 app.post('/execute-swap', async (req, res) => {
   try {
@@ -20,22 +20,62 @@ app.post('/execute-swap', async (req, res) => {
     console.log('🔑 Private key: Présente');
     console.log('🤖 Bot:', metadata?.bot);
     
-    // Test Vercel simple
-    const testSignature = "VERCEL_TEST_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+    // ========================================
+    // AJOUT #1 : TEST CONNEXION VERCEL
+    // ========================================
+    console.log('🎯 Test connexion Vercel...');
     
-    res.json({
-      success: true,
-      signature: testSignature,
-      explorerUrl: `https://solscan.io/tx/${testSignature}`,
-      method: "PROXY_STABLE",
-      message: "✅ Service proxy restauré - Test Vercel prêt",
-      timestamp: new Date().toISOString(),
-      dataReceived: {
-        transactionLength: transaction.length,
-        hasPrivateKey: !!privateKey,
-        metadata: metadata
-      }
-    });
+    try {
+      const vercelUrl = "https://solana-signer-vercel.vercel.app/api/sign";
+      console.log('📡 Test Vercel URL:', vercelUrl);
+      
+      // Test simple sans données sensibles
+      const vercelTest = await axios.get('https://solana-signer-vercel.vercel.app/', {
+        timeout: 5000
+      });
+      
+      console.log('✅ Vercel accessible, status:', vercelTest.status);
+      
+      const testSignature = "VERCEL_ACCESSIBLE_" + Date.now();
+      
+      res.json({
+        success: true,
+        signature: testSignature,
+        explorerUrl: `https://solscan.io/tx/${testSignature}`,
+        method: "PROXY_WITH_VERCEL_TEST",
+        message: "✅ Service proxy + Vercel accessible !",
+        vercelStatus: "Accessible",
+        vercelResponse: vercelTest.status,
+        timestamp: new Date().toISOString(),
+        dataReceived: {
+          transactionLength: transaction.length,
+          hasPrivateKey: !!privateKey,
+          metadata: metadata
+        }
+      });
+      
+    } catch (vercelError) {
+      console.log('⚠️ Vercel non accessible:', vercelError.message);
+      
+      // Fallback si Vercel ne répond pas
+      const fallbackSignature = "VERCEL_FALLBACK_" + Date.now();
+      
+      res.json({
+        success: true,
+        signature: fallbackSignature,
+        explorerUrl: `https://solscan.io/tx/${fallbackSignature}`,
+        method: "PROXY_FALLBACK",
+        message: "✅ Service proxy OK - Vercel en attente",
+        vercelStatus: "Not accessible",
+        vercelError: vercelError.message,
+        timestamp: new Date().toISOString(),
+        dataReceived: {
+          transactionLength: transaction.length,
+          hasPrivateKey: !!privateKey,
+          metadata: metadata
+        }
+      });
+    }
     
   } catch (error) {
     console.error('❌ Erreur proxy:', error.message);
@@ -48,16 +88,16 @@ app.post('/execute-swap', async (req, res) => {
 
 app.get('/', (req, res) => {
   res.send(`
-    <h1>🔥 Solana Proxy Service - RESTAURÉ</h1>
+    <h1>🔥 Solana Proxy Service - AJOUT #1</h1>
     <p>✅ Service proxy opérationnel !</p>
     <p>📡 Endpoint: POST /execute-swap</p>
     <p>🔗 URL: ${req.get('host')}</p>
     <p>🕐 ${new Date()}</p>
-    <p>⚡ Prêt pour intégration Vercel</p>
+    <p>🎯 Test connexion Vercel intégré</p>
   `);
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Service PROXY RESTAURÉ sur le port ${PORT}`);
+  console.log(`🚀 Service PROXY AJOUT #1 sur le port ${PORT}`);
 });
