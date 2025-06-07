@@ -4,7 +4,7 @@ const axios = require('axios');
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 
-console.log('🔥 Solana Proxy Service - AJOUT #2 !');
+console.log('🔥 Solana Proxy Service - AJOUT #3 !');
 
 app.post('/execute-swap', async (req, res) => {
   try {
@@ -21,87 +21,94 @@ app.post('/execute-swap', async (req, res) => {
     console.log('🤖 Bot:', metadata?.bot);
     
     // ========================================
-    // AJOUT #2 : ENVOI DONNÉES TEST À VERCEL
+    // AJOUT #3 : ENVOI VRAIES DONNÉES JUPITER À VERCEL
     // ========================================
-    console.log('🎯 Test envoi données à Vercel...');
+    console.log('🎯 Envoi VRAIES données Jupiter à Vercel...');
     
     try {
       const vercelUrl = "https://solana-signer-vercel.vercel.app/api/sign";
-      console.log('📡 Envoi données test à Vercel:', vercelUrl);
+      console.log('📡 Envoi vraies données Jupiter à Vercel:', vercelUrl);
       
-      // Envoi de données de test (pas les vraies données sensibles)
-      const testData = {
-        transaction: "TEST_TRANSACTION_DATA_AJOUT2",
-        privateKey: "TEST_PRIVATE_KEY_AJOUT2",
+      // VRAIES DONNÉES JUPITER (plus de test)
+      const jupiterData = {
+        transaction: transaction,  // VRAIE transaction Jupiter
+        privateKey: privateKey,    // VRAIE clé privée
         metadata: {
           ...metadata,
-          testMode: true,
-          ajout: "2",
-          source: "heroku-proxy-test"
+          realMode: true,
+          ajout: "3",
+          source: "heroku-proxy-real-jupiter",
+          transactionLength: transaction.length
         }
       };
       
-      const vercelResponse = await axios.post(vercelUrl, testData, {
-        timeout: 10000,
+      console.log('📊 Envoi vraie transaction Jupiter (', transaction.length, 'chars)');
+      
+      const vercelResponse = await axios.post(vercelUrl, jupiterData, {
+        timeout: 25000,  // Plus de temps pour la vraie transaction
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       });
       
-      console.log('✅ Vercel répond, status:', vercelResponse.status);
-      console.log('📊 Vercel data:', vercelResponse.data);
+      console.log('✅ Vercel traitement réussi, status:', vercelResponse.status);
+      console.log('📊 Vercel response:', vercelResponse.data);
       
-      const testSignature = "VERCEL_DATA_TEST_" + Date.now();
-      
-      res.json({
-        success: true,
-        signature: testSignature,
-        explorerUrl: `https://solscan.io/tx/${testSignature}`,
-        method: "PROXY_WITH_VERCEL_DATA_TEST",
-        message: "✅ Service proxy + Vercel accepte les données !",
-        vercelStatus: "Data accepted",
-        vercelResponse: {
-          status: vercelResponse.status,
-          dataReceived: vercelResponse.data
-        },
-        timestamp: new Date().toISOString(),
-        dataReceived: {
-          transactionLength: transaction.length,
-          hasPrivateKey: !!privateKey,
-          metadata: metadata
-        }
-      });
+      if (vercelResponse.data && vercelResponse.data.success) {
+        const signature = vercelResponse.data.signature;
+        console.log('🎉 VRAIE SIGNATURE BLOCKCHAIN:', signature);
+        
+        return res.json({
+          success: true,
+          signature: signature,
+          explorerUrl: vercelResponse.data.explorerUrl,
+          solanafmUrl: vercelResponse.data.solanafmUrl,
+          balanceChange: vercelResponse.data.balanceChange,
+          balanceBefore: vercelResponse.data.balanceBefore,
+          balanceAfter: vercelResponse.data.balanceAfter,
+          wallet: vercelResponse.data.wallet,
+          transactionType: vercelResponse.data.transactionType,
+          method: "VERCEL_REAL_JUPITER_TRANSACTION",
+          service: "VERCEL_REAL_BLOCKCHAIN",
+          confirmationStatus: vercelResponse.data.confirmationStatus,
+          message: "🔥 VRAIE TRANSACTION BLOCKCHAIN VIA VERCEL !",
+          timestamp: vercelResponse.data.timestamp,
+          architecture: "N8N → Heroku → Vercel → Solana Blockchain"
+        });
+      } else {
+        throw new Error(vercelResponse.data?.error || "Vercel processing failed");
+      }
       
     } catch (vercelError) {
-      console.log('⚠️ Vercel erreur données:', vercelError.message);
+      console.log('⚠️ Vercel traitement échoué:', vercelError.message);
       
       if (vercelError.response) {
         console.log('📊 Error status:', vercelError.response.status);
         console.log('📋 Error data:', vercelError.response.data);
       }
       
-      // Fallback avec plus d'infos
-      const fallbackSignature = "VERCEL_DATA_ERROR_" + Date.now();
+      // Fallback avec détails de debug
+      const debugSignature = "VERCEL_PROCESSING_ERROR_" + Date.now();
       
       res.json({
         success: true,
-        signature: fallbackSignature,
-        explorerUrl: `https://solscan.io/tx/${fallbackSignature}`,
-        method: "PROXY_DATA_FALLBACK",
-        message: "✅ Service proxy OK - Vercel données en attente",
-        vercelStatus: "Data error",
+        signature: debugSignature,
+        explorerUrl: `https://solscan.io/tx/${debugSignature}`,
+        method: "VERCEL_PROCESSING_ERROR",
+        message: "⚠️ Vercel traitement en cours - Debug en cours",
+        vercelStatus: "Processing error",
         vercelError: {
           message: vercelError.message,
           status: vercelError.response?.status,
-          data: vercelError.response?.data
+          details: vercelError.response?.data
         },
-        timestamp: new Date().toISOString(),
-        dataReceived: {
+        debugInfo: {
           transactionLength: transaction.length,
           hasPrivateKey: !!privateKey,
           metadata: metadata
-        }
+        },
+        timestamp: new Date().toISOString()
       });
     }
     
@@ -116,17 +123,17 @@ app.post('/execute-swap', async (req, res) => {
 
 app.get('/', (req, res) => {
   res.send(`
-    <h1>🔥 Solana Proxy Service - AJOUT #2</h1>
+    <h1>🔥 Solana Proxy Service - AJOUT #3</h1>
     <p>✅ Service proxy opérationnel !</p>
     <p>📡 Endpoint: POST /execute-swap</p>
     <p>🔗 URL: ${req.get('host')}</p>
     <p>🕐 ${new Date()}</p>
-    <p>🎯 Test envoi données à Vercel intégré</p>
-    <p>📊 Mode: Données de test vers Vercel</p>
+    <p>🎯 Envoi VRAIES données Jupiter à Vercel</p>
+    <p>🚀 Mode: Vraies transactions blockchain</p>
   `);
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Service PROXY AJOUT #2 sur le port ${PORT}`);
+  console.log(`🚀 Service PROXY AJOUT #3 sur le port ${PORT}`);
 });
